@@ -1,108 +1,71 @@
-//  OpenShift sample Node application
-var express = require('express'),
-    app     = express(),
-    morgan  = require('morgan');
-    
-Object.assign=require('object-assign')
+/**
+ * This script starts a https server accessible at https://localhost:8443
+ * to test the chat
+ *
+ * @author Carlos Delgado
+ */
+var fs     = require('fs');
+var http   = require('http');
+var https  = require('https');
+var path   = require("path");
+var os     = require('os');
+var ifaces = os.networkInterfaces();
 
-app.engine('html', require('ejs').renderFile);
-app.use(morgan('combined'))
+// Public Self-Signed Certificates for HTTPS connection
+var privateKey  = fs.readFileSync('./../certificates/key.pem', 'utf8');
+var certificate = fs.readFileSync('./../certificates/cert.pem', 'utf8');
 
-var port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
-    ip   = process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0',
-    mongoURL = process.env.OPENSHIFT_MONGODB_DB_URL || process.env.MONGO_URL,
-    mongoURLLabel = "";
+var credentials = {key: privateKey, cert: certificate};
+var express = require('express');
+var app = express();
 
-if (mongoURL == null && process.env.DATABASE_SERVICE_NAME) {
-  var mongoServiceName = process.env.DATABASE_SERVICE_NAME.toUpperCase(),
-      mongoHost = process.env[mongoServiceName + '_SERVICE_HOST'],
-      mongoPort = process.env[mongoServiceName + '_SERVICE_PORT'],
-      mongoDatabase = process.env[mongoServiceName + '_DATABASE'],
-      mongoPassword = process.env[mongoServiceName + '_PASSWORD']
-      mongoUser = process.env[mongoServiceName + '_USER'];
+var httpServer = http.createServer(app);
+var httpsServer = https.createServer(credentials, app);
 
-  if (mongoHost && mongoPort && mongoDatabase) {
-    mongoURLLabel = mongoURL = 'mongodb://';
-    if (mongoUser && mongoPassword) {
-      mongoURL += mongoUser + ':' + mongoPassword + '@';
-    }
-    // Provide UI label that excludes user id and pw
-    mongoURLLabel += mongoHost + ':' + mongoPort + '/' + mongoDatabase;
-    mongoURL += mongoHost + ':' +  mongoPort + '/' + mongoDatabase;
+/**
+ *  Show in the console the URL access for other devices in the network
+ */
+Object.keys(ifaces).forEach(function (ifname) {
+    var alias = 0;
 
-  }
-}
-var db = null,
-    dbDetails = new Object();
+    ifaces[ifname].forEach(function (iface) {
+        if ('IPv4' !== iface.family || iface.internal !== false) {
+            // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+            return;
+        }
+        
+        console.log("");
+        console.log("Welcome to the Chat Sandbox");
+        console.log("");
+        console.log("Test the chat interface from this device at : ", "https://localhost:8443");
+        console.log("");
+        console.log("And access the chat sandbox from another device through LAN using any of the IPS:");
+        console.log("Important: Node.js needs to accept inbound connections through the Host Firewall");
+        console.log("");
 
-var initDb = function(callback) {
-  if (mongoURL == null) return;
+        if (alias >= 1) {
+            console.log("Multiple ipv4 addreses were found ... ");
+            // this single interface has multiple ipv4 addresses
+            console.log(ifname + ':' + alias, "https://"+ iface.address + ":8443");
+        } else {
+            // this interface has only one ipv4 adress
+            console.log(ifname, "https://"+ iface.address + ":8443");
+        }
 
-  var mongodb = require('mongodb');
-  if (mongodb == null) return;
+        ++alias;
+    });
+});
 
-  mongodb.connect(mongoURL, function(err, conn) {
-    if (err) {
-      callback(err);
-      return;
-    }
-
-    db = conn;
-    dbDetails.databaseName = db.databaseName;
-    dbDetails.url = mongoURLLabel;
-    dbDetails.type = 'MongoDB';
-
-    console.log('Connected to MongoDB at: %s', mongoURL);
-  });
-};
+// Allow access from all the devices of the network (as long as connections are allowed by the firewall)
+var LANAccess = "0.0.0.0";
+// For http
+httpServer.listen(8080, LANAccess);
+// For https
+httpsServer.listen(8443, LANAccess);
 
 app.get('/', function (req, res) {
-  // try to initialize the db on every request if it's not already
-  // initialized.
-  if (!db) {
-    initDb(function(err){});
-  }
-  if (db) {
-    var col = db.collection('counts');
-    // Create a document with request IP and current time of request
-    col.insert({ip: req.ip, date: Date.now()});
-    col.count(function(err, count){
-      if (err) {
-        console.log('Error running count. Message:\n'+err);
-      }
-      res.render('index.html', { pageCountMessage : count, dbInfo: dbDetails });
-    });
-  } else {
-    res.render('index.html', { pageCountMessage : null});
-  }
+    res.sendFile(path.join(__dirname+'/index.html'));
 });
 
-app.get('/pagecount', function (req, res) {
-  // try to initialize the db on every request if it's not already
-  // initialized.
-  if (!db) {
-    initDb(function(err){});
-  }
-  if (db) {
-    db.collection('counts').count(function(err, count ){
-      res.send('{ pageCount: ' + count + '}');
-    });
-  } else {
-    res.send('{ pageCount: -1 }');
-  }
-});
-
-// error handling
-app.use(function(err, req, res, next){
-  console.error(err.stack);
-  res.status(500).send('Something bad happened!');
-});
-
-initDb(function(err){
-  console.log('Error connecting to Mongo. Message:\n'+err);
-});
-
-app.listen(port, ip);
-console.log('Server running on http://%s:%s', ip, port);
-
-module.exports = app ;
+// Expose the css and js resources as "resources"
+app.use('/resources', express.static('./source'));
