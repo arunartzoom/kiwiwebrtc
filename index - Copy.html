@@ -33,7 +33,12 @@ body {
     background: rgba(0, 0, 0, 0.5);
     color: #f1f1f1;
     width: 100%;
-    padding: 20px;
+    padding: 6px 1px 1px 6px;
+}
+
+#peer-id-label{
+    color: #5ebfff;
+    font-size: 14px;
 }
 
 
@@ -41,9 +46,12 @@ body {
 </style>
 <!-- Use Bootswatch CSS from cdn -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/cerulean/bootstrap.min.css">
+ <!--    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script> -->
 </head>
 <body>
-    
+
      <!-- Display video of the connected peer -->
     <div class="text-center">
         <video id="peer-camera" ></video>
@@ -52,8 +60,14 @@ body {
 
 
 <div class="content">
-
-   <div class="container-fluid">
+<p>
+  <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+    Menu
+  </a>
+</p>
+<div class="collapse" id="collapseExample">
+  <div class="card card-body">
+  <div class="container-fluid">
         <div class="row">
           <div class="col-12 col-md-2">
                 <div class="text-center">
@@ -119,6 +133,10 @@ body {
                 </div>              
           </div>
         </div>
+  </div>
+</div>
+
+ 
   
     </div>
 </div>
