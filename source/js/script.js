@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
      *
      * The iceServers on this example are public and can be used for your project.
      */
-    var peer = new Peer({
+ /*   var peer = new Peer({
         host: "172.30.92.128",
         port: 9000,
         path: '/peerjs',
@@ -27,7 +27,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 }
             ]
         }
-    });
+    });*/
+
+var peer = new Peer({key: 'xeob384hfxl2fbt9'});
 
     // Once the initialization succeeds:
     // Show the ID that allows other user to connect to your session.
