@@ -1,107 +1,130 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Video Chat with PeerJS</title>
-    
-    <!-- Use Bootswatch CSS from cdn -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial;
+    font-size: 17px;
+}
+
+#peer-camera {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%; 
+    min-height: 100%;
+}
+#my-camera{
+    border: 1px solid #b6b6b6;
+    border-radius: 11px;
+    width: 100%;
+    max-width: 150px;
+}
+
+.content {
+    position: fixed;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    color: #f1f1f1;
+    width: 100%;
+    padding: 20px;
+}
+
+
+
+</style>
+<!-- Use Bootswatch CSS from cdn -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/cerulean/bootstrap.min.css">
 </head>
-
 <body>
-    <div class="container">
+    
+     <!-- Display video of the connected peer -->
+    <div class="text-center">
+        <video id="peer-camera" ></video>
+        <span class="label label-info" id="connected_peer"></span>
+    </div>
 
-        <div class="row">
-            <div class="col-md-12 col-lg-12">
-                <!-- Display video of the connected peer -->
-                <div class="text-center">
-                    <video id="peer-camera" width="800" height="600" autoplay="autoplay" class="center-block"></video>
-                    <span class="label label-info" id="connected_peer"></span>
-                </div>
-            </div>           
 
-        </div>
+<div class="content">
+
+   <div class="container-fluid">
         <div class="row">
-            <div class="col-md-6 col-lg-6">
-                <!-- 
-                    Display video of the current user
-                    Note: mute your own video, otherwise you'll hear yourself ...
-                 -->
+          <div class="col-12 col-md-2">
                 <div class="text-center">
-                    <video id="my-camera"  width="300" height="300" autoplay="autoplay" muted="true" class="center-block"></video>
+                    <video id="my-camera" autoplay="autoplay" muted="true" class="center-block"></video>
                     <span class="label label-info">You</span>
-                </div>
-            </div>
+                </div>              
+          </div>
+          <div class="col-12 col-md-10">
+                <div class="row">
 
-            
-        </div>
-
-        <div class="row">
-            <h1 class="text-center">
-                Videochat Example
-                <br>
-                <small> Share the following ID with the pal that wants to talk with you</small>
-            </h1>
-            <!-- The ID of your current session -->
-            <h4 class="text-center">
-                <span id="peer-id-label"></span>
-            </h4>
-            <div class="col-md-12 col-lg-12">
-                <div class="form-horizontal" id="connection-form">
-                    <fieldset>
-                        <legend>Connection Form</legend>
-                        <div class="form-group">
-                            <label for="name" class="col-lg-2 control-label">Username</label>
-                            <div class="col-lg-10">
-                                <input type="text" class="form-control" name="name" id="name" placeholder="Your random username">
-                            </div>
+                    <div class="col-md-12 col-lg-12">
+                        <div class="form-horizontal" id="connection-form">
+                            <fieldset>
+                                <div class="form-group">
+                                    <label for="name" class="col-lg-2 control-label">Username</label>
+                                    <div class="col-lg-10">
+                                        <input type="text" class="form-control" name="name" id="name" placeholder="Your random username">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="peer_id" class="col-lg-2 control-label">Partner Id</label>
+                                    <div class="col-lg-10">
+                                        <input type="text" class="form-control" name="peer_id" id="peer_id" placeholder="Peer ID" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                                        
+                                        <!-- Show message if someone connected to the client -->
+                                        <div id="connected_peer_container" class="hidden">
+                                            An user is already connected to your session. Just provide a name to connect !
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-lg-3 col-lg-offset-2">
+                                        <button id="connect-to-peer-btn" class="btn btn-primary">Connect to Peer</button>
+                                    </div>
+                                    <div class="col-lg-4"> 
+                                        <small> Share the following ID with the pal that wants to talk with you  : </small><span id="peer-id-label"></span>
+                                    </div>
+                                </div>
+                            </fieldset>
                         </div>
-                        <div class="form-group">
-                            <label for="peer_id" class="col-lg-2 control-label">Peer ID (id of your pal)</label>
-                            <div class="col-lg-10">
-                                <input type="text" class="form-control" name="peer_id" id="peer_id" placeholder="Peer ID" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-                                
-                                <!-- Show message if someone connected to the client -->
-                                <div id="connected_peer_container" class="hidden">
-                                    An user is already connected to your session. Just provide a name to connect !
+                    </div>
+                    <div class="col-md-12 col-lg-12">
+                        <div id="chat" class="hidden">
+                            <div id="messages-container">
+                                <div class="list-group" id="messages"></div>
+                            </div>
+                            <div id="message-container">
+                                <div class="form-group">
+                                    <label class="control-label">Live chat</label>
+                                    <div class="input-group">
+                                        <span class="input-group-btn">
+                                            <button id="call" class="btn btn-info">Call</button>
+                                        </span>
+                                        <input type="text" class="form-control" name="message" id="message" placeholder="Your messag here ...">
+                                        <span class="input-group-btn">
+                                            <button id="send-message" class="btn btn-success">Send Message</button>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <div class="col-lg-10 col-lg-offset-2">
-                                <button id="connect-to-peer-btn" class="btn btn-primary">Connect to Peer</button>
-                            </div>
-                        </div>
-                    </fieldset>
-                </div>
-            </div>
-            <div class="col-md-12 col-lg-12">
-                <div id="chat" class="hidden">
-                    <div id="messages-container">
-                        <div class="list-group" id="messages"></div>
                     </div>
-                    <div id="message-container">
-                        <div class="form-group">
-                            <label class="control-label">Live chat</label>
-                            <div class="input-group">
-                                <span class="input-group-btn">
-                                    <button id="call" class="btn btn-info">Call</button>
-                                </span>
-                                <input type="text" class="form-control" name="message" id="message" placeholder="Your messag here ...">
-                                <span class="input-group-btn">
-                                    <button id="send-message" class="btn btn-success">Send Message</button>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                </div>              
+          </div>
         </div>
+  
     </div>
- 
+</div>
+
     <script src="resources/js/peer.min.js"></script>
     <script src="resources/js/script.js"></script>
-</body>
 
+</body>
 </html>
