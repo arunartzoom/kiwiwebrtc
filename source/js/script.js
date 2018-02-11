@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
      */
     var peer = new Peer({
         host: "35.227.91.151",
-        port: 9000,
+        port: 9097,
         path: '/peerjs',
         debug: 3,
         config: {
